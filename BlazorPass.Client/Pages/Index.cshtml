@@ -1,0 +1,106 @@
+﻿@using BlazorPass.Shared
+@page "/"
+
+@inject Sotsera.Blazor.Toaster.IToaster toaster;
+@inject HttpClient http
+
+<div class="container">
+    <div class="row">
+        <div class="col-md"></div>
+        <div class="col-md-auto border rounded shadow">
+            <form class="my-auto">
+                <div class="form-group"></div>
+                <div class="form-group">
+                    @*<label for="username">Username</label>*@
+                    <input type="text" class="form-control" id="username"
+                           bind="@_username"
+                           placeholder="username" aria-describedby="usernameHelp" />
+                    <small id="usernameHelp" class="form-text text-muted">Enter your username <b><i>without</i></b> any adornments like domain names.</small>
+                </div>
+                <div class="form-group">
+                    @*<label for="currentPassword">Current Password</label>*@
+                    <input type="password" class="form-control" id="currentPassword"
+                           bind="@_currentPassword"
+                           placeholder="current password" aria-describedby="currentPasswordHelp" />
+                    <small id="currentPasswordHelp" class="form-text text-muted">Provide your current password.</small>
+                </div>
+                <div class="form-group">
+                    @*<label for="newPassword">New Password</label>*@
+                    <input type="password" class="form-control" id="newPassword"
+                           bind="@_newPassword"
+                           placeholder="new password" aria-describedby="newPasswordHelp" />
+                    <small id="newPasswordHelp" class="form-text text-muted">Provide a new password that satisfies the password policy requirements.</small>
+                </div>
+                <div class="form-group">
+                    @*<label for="confirmNewPassword">Confirm New Password</label>*@
+                    <input type="password" class="form-control @InvalidIf(ConfirmNewPasswordInvalid)" id="confirmNewPassword"
+                           bind="@_confirmNewPassword"
+                           placeholder="confirm new password" aria-describedby="confirmNewPasswordHelp" />
+                    <small id="confirmNewPasswordHelp" class="form-text text-muted">Repeat the new password to make sure they match.</small>
+                    <div class="invalid-feedback">@ConfirmNewPasswordInvalid</div>
+                </div>
+
+                <button type="button" class="btn btn-primary float-right my-3"
+                        onclick="@ChangePassword"
+                        disabled="@ChangePasswordDisabled">Change Password</button>
+                <div class="form-group"></div>
+            </form>
+        </div>
+        <div class="col-md"></div>
+    </div>
+</div>
+
+@functions {
+
+    string _username;
+    string _currentPassword;
+    string _newPassword;
+    string _confirmNewPassword;
+
+    string InvalidIf(string msg) => string.IsNullOrEmpty(msg)
+            ? ""
+            : "is-invalid";
+
+    string ConfirmNewPasswordInvalid => _newPassword == _confirmNewPassword
+            ? ""
+            : "New passwords do not match";
+
+    bool ChangePasswordDisabled => string.IsNullOrEmpty(_username)
+            || string.IsNullOrEmpty(_currentPassword)
+            || string.IsNullOrEmpty(_newPassword)
+            || string.IsNullOrEmpty(_confirmNewPassword)
+            || (_newPassword != _confirmNewPassword);
+
+    async void ChangePassword()
+    {
+        var requ = new PasswordChangeRequest
+        {
+            Username = _username,
+            CurrentPassword = _currentPassword,
+            NewPassword = _newPassword,
+        };
+
+        try
+        {
+            var resp = await http.PostJsonAsync<PasswordChangeResponse>($"{Program.Settings.Api}/PasswordChange", requ);
+            if (resp.ErrorCode == 0)
+            {
+                toaster.Success("Successfully updated password");
+            }
+            else
+            {
+                toaster.Error($"Failed to update password: {resp.ErrorCode}:{resp.ErrorName}:{resp.ErrorDetail}");
+            }
+        }
+        finally
+        {
+            _currentPassword = null;
+            _newPassword = null;
+            _confirmNewPassword = null;
+
+            // Because of the async and toasts above, Blazor may be done detecting
+            // changes before we get here so we need to signal that we're dirty
+            this.StateHasChanged();
+        }
+    }
+}
