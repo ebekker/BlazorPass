@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2035
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorPass.Server", "BlazorPass.Server\BlazorPass.Server.csproj", "{91BA9EB3-39CA-4133-9379-EBB3816F28C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorPass.Client", "BlazorPass.Client\BlazorPass.Client.csproj", "{7A24FA19-BDBB-4514-8202-223CCA53FE83}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorPass.Shared", "BlazorPass.Shared\BlazorPass.Shared.csproj", "{F85E0B1E-10EA-4B68-81D5-3678C37594BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unosquare.PassCore.Common", "Unosquare.PassCore.Common\Unosquare.PassCore.Common.csproj", "{5C8DDFE4-2C44-4D54-88CB-2E6D51EA9185}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zyborg.PassCore.PasswordProvider.LDAP", "Zyborg.PassCore.PasswordProvider.LDAP\Zyborg.PassCore.PasswordProvider.LDAP.csproj", "{4710522B-4B10-4C0E-8A65-1D8820571BC2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{91BA9EB3-39CA-4133-9379-EBB3816F28C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91BA9EB3-39CA-4133-9379-EBB3816F28C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91BA9EB3-39CA-4133-9379-EBB3816F28C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91BA9EB3-39CA-4133-9379-EBB3816F28C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A24FA19-BDBB-4514-8202-223CCA53FE83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A24FA19-BDBB-4514-8202-223CCA53FE83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A24FA19-BDBB-4514-8202-223CCA53FE83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A24FA19-BDBB-4514-8202-223CCA53FE83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F85E0B1E-10EA-4B68-81D5-3678C37594BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F85E0B1E-10EA-4B68-81D5-3678C37594BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F85E0B1E-10EA-4B68-81D5-3678C37594BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F85E0B1E-10EA-4B68-81D5-3678C37594BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C8DDFE4-2C44-4D54-88CB-2E6D51EA9185}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C8DDFE4-2C44-4D54-88CB-2E6D51EA9185}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C8DDFE4-2C44-4D54-88CB-2E6D51EA9185}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C8DDFE4-2C44-4D54-88CB-2E6D51EA9185}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4710522B-4B10-4C0E-8A65-1D8820571BC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4710522B-4B10-4C0E-8A65-1D8820571BC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4710522B-4B10-4C0E-8A65-1D8820571BC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4710522B-4B10-4C0E-8A65-1D8820571BC2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D4BA836B-71B7-4AC9-B12F-40CF654B3CE3}
+	EndGlobalSection
+EndGlobal
