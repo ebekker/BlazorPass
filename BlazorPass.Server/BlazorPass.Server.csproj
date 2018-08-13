@@ -22,8 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\passcore\src\Unosquare.PassCore.Common\Unosquare.PassCore.Common.csproj" />
-    <ProjectReference Include="..\..\passcore\src\Zyborg.PassCore.PasswordProvider.LDAP\Zyborg.PassCore.PasswordProvider.LDAP.csproj" />
+    <ProjectReference Include="..\Unosquare.PassCore.Common\Unosquare.PassCore.Common.csproj" />
+    <ProjectReference Include="..\Zyborg.PassCore.PasswordProvider.LDAP\Zyborg.PassCore.PasswordProvider.LDAP.csproj" />
     <ProjectReference Include="..\BlazorPass.Client\BlazorPass.Client.csproj" />
     <ProjectReference Include="..\BlazorPass.Shared\BlazorPass.Shared.csproj" />
   </ItemGroup>
