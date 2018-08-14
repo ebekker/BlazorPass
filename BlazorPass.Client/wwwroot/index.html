@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
@@ -11,6 +11,13 @@
 <body>
     <app>Loading...</app>
 
+    <script>
+        window.blazorPassFunctions = {
+            getElementValue: function (el) {
+                return el.value;
+            }
+        };
+    </script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 </html>
