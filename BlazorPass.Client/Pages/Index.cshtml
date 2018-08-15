@@ -11,8 +11,8 @@
             <form class="my-auto">
                 <div class="form-group"></div>
                 @*<div class="form-group">
-                    <input type="text" ref="inputElement" bind="@_test" onkeyup="@(ev => Foo())" /> [@_test][@_test2]
-                </div>*@
+            <input type="text" ref="inputElement" bind="@_test" onkeyup="@(ev => Foo())" /> [@_test][@_test2]
+        </div>*@
                 <div class="form-group">
                     @*<label for="username">Username</label>*@
                     <input ref="_usernameElement" type="text" class="form-control" id="username"
@@ -46,6 +46,19 @@
                     <small id="confirmNewPasswordHelp" class="form-text text-muted">Repeat the new password to make sure they match.</small>
                     <div class="invalid-feedback">@ConfirmNewPasswordInvalid</div>
                 </div>
+                <div class="form-group"></div>
+                @if (true || Program.Settings.ShowMfa)
+                {
+                    <div class="form-group">
+                        @*<label for="mfa">Provide MFA Token</label>*@
+                        <input ref="_mfaElement" type="text" class="form-control" id="mfa"
+                               bind="@_mfa"
+                               onkeyup="@(ev => OnKeyUp(_mfaElement, x => _mfa = x))"
+                               placeholder="enter MFA token" aria-describedby="mfaHelp" />
+                        <small id="mfaHelp" class="form-text text-muted">Enter your MFA token.</small>
+                    </div>
+                    <div class="form-group"></div>
+                }
 
                 <button type="button" class="btn btn-primary float-right my-3"
                         onclick="@ChangePassword"
@@ -64,6 +77,7 @@
     ElementRef _currentPasswordElement;
     ElementRef _newPasswordElement;
     ElementRef _confirmNewPasswordElement;
+    ElementRef _mfaElement;
 
     void OnKeyUp(ElementRef element, Action<string> handler)
     {
@@ -72,13 +86,13 @@
         handler(x);
     }
 
-    string _test;
-    string _test2;
+    bool _showProgress;
 
     string _username;
     string _currentPassword;
     string _newPassword;
     string _confirmNewPassword;
+    string _mfa;
 
     string InvalidIf(string msg) => string.IsNullOrEmpty(msg)
             ? ""
@@ -88,11 +102,13 @@
             ? ""
             : "New passwords do not match";
 
-    bool ChangePasswordDisabled => string.IsNullOrEmpty(_username)
+    bool ChangePasswordDisabled => _showProgress
+            || string.IsNullOrEmpty(_username)
             || string.IsNullOrEmpty(_currentPassword)
             || string.IsNullOrEmpty(_newPassword)
             || string.IsNullOrEmpty(_confirmNewPassword)
-            || (_newPassword != _confirmNewPassword);
+            || (_newPassword != _confirmNewPassword)
+            || (Program.Settings.ShowMfa && string.IsNullOrEmpty(_mfa));
 
     async void ChangePassword()
     {
@@ -101,10 +117,13 @@
             Username = _username,
             CurrentPassword = _currentPassword,
             NewPassword = _newPassword,
+            Mfa = _mfa,
         };
 
         try
         {
+            await SetProgress(true);
+
             var resp = await http.PostJsonAsync<PasswordChangeResponse>($"{Program.Settings.Api}/PasswordChange", requ);
             if (resp.ErrorCode == 0)
             {
@@ -112,7 +131,15 @@
             }
             else
             {
-                toaster.Error($"Failed to update password: {resp.ErrorCode}:{resp.ErrorName}:{resp.ErrorDetail}");
+                toaster.Error($"Failed to update password: {resp.ErrorCode}:{resp.ErrorName}:{resp.ErrorDetail}",
+                        title: "Error",
+                        // We really want to disable the auto-hide, but Blazor Toaster does not
+                        // [yet](https://github.com/sotsera/sotsera.blazor.toaster/issues/11)
+                        // offer that option so we just make it very long
+                        configure: x => {
+                            x.VisibleStateDuration = int.MaxValue;
+                            x.ShowProgressBar = false;
+                        });
             }
         }
         finally
@@ -120,10 +147,20 @@
             _currentPassword = null;
             _newPassword = null;
             _confirmNewPassword = null;
+            await SetProgress(false);
 
             // Because of the async and toasts above, Blazor may be done detecting
             // changes before we get here so we need to signal that we're dirty
             this.StateHasChanged();
         }
+    }
+
+    async Task SetProgress(bool show)
+    {
+        _showProgress = show;
+        await JSRuntime.Current.InvokeAsync<string>(
+                "blazorPassFunctions.showProgress",
+                _showProgress);
+        this.StateHasChanged();
     }
 }

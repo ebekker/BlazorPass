@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Blazor.Server;
+﻿using BlazorPass.Server.MFA;
+using Microsoft.AspNetCore.Blazor.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
 using System.Linq;
 using System.Net.Mime;
@@ -14,10 +16,13 @@ namespace BlazorPass.Server
 {
     public class Startup
     {
+        private ILogger _logger;
+
         public IConfiguration AppConfig { get; }
 
-        public Startup(IConfiguration config)
+        public Startup(ILogger<Startup> logger, IConfiguration config)
         {
+            _logger = logger;
             AppConfig = config;
         }
 
@@ -38,8 +43,12 @@ namespace BlazorPass.Server
                 });
             });
 
-            services.Configure<LdapPasswordChangeOptions>(
-                AppConfig.GetSection(nameof(LdapPasswordChangeOptions)));
+            var pwdOptions = AppConfig.GetSection(nameof(LdapPasswordChangeOptions));
+            var mfaOptions = AppConfig.GetSection("MFA");
+
+            services.Configure<MfaOptions>(mfaOptions);
+            services.AddSingleton<MfaResolver>();
+            services.Configure<LdapPasswordChangeOptions>(pwdOptions);
             services.AddSingleton<IPasswordChangeProvider, LdapPasswordChangeProvider>();
         }
 

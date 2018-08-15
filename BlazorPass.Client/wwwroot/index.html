@@ -9,12 +9,23 @@
     <link href="css/site.css" rel="stylesheet" />
 </head>
 <body>
-    <app>Loading...</app>
+    <app id="mainApp">Loading...</app>
 
     <script>
         window.blazorPassFunctions = {
             getElementValue: function (el) {
                 return el.value;
+            },
+            showProgress: function (show) {
+                var main = document.getElementById("mainApp");
+                console.info("Got main: " + main);
+                if (show) {
+                    main.style.cursor = "progress";
+                }
+                else {
+                    main.style.cursor = null;
+                }
+                return main.style.cursor;
             }
         };
     </script>

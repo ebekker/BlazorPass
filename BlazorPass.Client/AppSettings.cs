@@ -9,5 +9,7 @@ namespace BlazorPass.Client
     {
         public string Name { get; set; }
         public string Api { get; set; }
+
+        public bool ShowMfa { get; set; }
     }
 }

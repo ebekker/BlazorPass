@@ -16,7 +16,7 @@ namespace BlazorPass.Client
             {
                 // Using the demo, was able to come up with sensible values:
                 //    https://sotsera.github.io/sotsera.blazor.toaster/
-                config.PositionClass = Defaults.Classes.Position.TopCenter;
+                config.PositionClass = Defaults.Classes.Position.TopFullWidth;
                 config.PreventDuplicates = false;
                 config.NewestOnTop = false;
                 config.ShowTransitionDuration = 500;

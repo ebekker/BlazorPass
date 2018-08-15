@@ -11,5 +11,7 @@ namespace BlazorPass.Shared
         public string CurrentPassword { get; set; }
 
         public string NewPassword { get; set; }
+
+        public string Mfa { get; set; }
     }
 }
