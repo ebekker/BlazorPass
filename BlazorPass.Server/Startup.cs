@@ -43,9 +43,11 @@ namespace BlazorPass.Server
                 });
             });
 
+            var pstOptions = AppConfig.GetSection(nameof(PresetOptions));
             var pwdOptions = AppConfig.GetSection(nameof(LdapPasswordChangeOptions));
             var mfaOptions = AppConfig.GetSection("MFA");
 
+            services.Configure<PresetOptions>(pstOptions);
             services.Configure<MfaOptions>(mfaOptions);
             services.AddSingleton<MfaResolver>();
             services.Configure<LdapPasswordChangeOptions>(pwdOptions);

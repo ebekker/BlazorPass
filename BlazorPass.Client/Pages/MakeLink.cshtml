@@ -1,0 +1,174 @@
+﻿@using BlazorPass.Shared
+@page "/makelink"
+
+@inject Sotsera.Blazor.Toaster.IToaster toaster;
+@inject Microsoft.AspNetCore.Blazor.Services.IUriHelper uriHelper;
+
+<div class="container">
+    <div class="row">
+        <div class="col-md"></div>
+        <div class="col-md">
+            <p>
+                Use this form to generate a link to a <i>preset</i> combination of username + password.
+            </p><p>
+                An example use case would be when a user's account is first setup or their
+                password is reset.  You can generate a link here and message it to them.
+            </p><p>
+                The generated link includes an encrypted payload that is only accessible to the
+                password changing server.  To increase security such as preventing interception
+                of the link in a message, you can augment the change password form with a second
+                factor of authentication (MFA).
+            </p>
+        </div>
+        <div class="col-md"></div>
+    </div>
+    <div class="row">
+        <div class="col-md"></div>
+        <div class="col-md-auto border rounded shadow">
+            <form class="my-auto">
+                <div class="form-group"></div>
+                <div class="form-group">
+                    <input ref="_usernameElement" type="text" class="form-control" id="username"
+                           bind="@_username"
+                           onkeyup="@(ev => OnKeyUp(_usernameElement, x => _username = x))"
+                           placeholder="username" aria-describedby="usernameHelp" />
+                    <small id="usernameHelp" class="form-text text-muted">Enter the username <b><i>without</i></b> any adornments like domain names.</small>
+                </div>
+                <div class="form-group">
+                    <input ref="_passwordElement" type="password" class="form-control" id="password"
+                           bind="@_password"
+                           onkeyup="@(ev => OnKeyUp(_passwordElement, x => _password = x))"
+                           placeholder="password" aria-describedby="passwordHelp" />
+                    <small id="passwordHelp" class="form-text text-muted">Provide the current password for the username above.</small>
+                </div>
+                <div class="form-group">
+                    @*<label for="confirmNewPassword">Confirm New Password</label>*@
+                    <input ref="_confirmPasswordElement" type="password" class="form-control @InvalidIf(ConfirmPasswordInvalid)" id="confirmPassword"
+                           bind="@_confirmPassword"
+                           onkeyup="@(ev => OnKeyUp(_confirmPasswordElement, x => _confirmPassword = x))"
+                           placeholder="confirm password" aria-describedby="confirmPasswordHelp" />
+                    <small id="confirmPasswordHelp" class="form-text text-muted">Repeat the password to make sure they match.</small>
+                    <div class="invalid-feedback">@ConfirmPasswordInvalid</div>
+                </div>
+                <div class="form-group"></div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary float-right my-3"
+                            onclick="@GenerateLink"
+                            disabled="@GenerateLinkDisabled">
+                        Generate Link
+                    </button>
+
+                </div>
+                <div class="form-group"></div>
+                <div class="form-group" hidden="@(string.IsNullOrEmpty(_generatedLink))">
+                    <div class="input-group mb-3">
+                        <input ref="_generatedLinkElement" type="text" class="form-control id="generatedLink"
+                               bind="_generatedLink"
+                               readonly="readonly" />
+                        <div class="input-group-append">
+                            <span class="input-group-text">
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="@CopyGeneratedLink"
+                                        title="copy">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group"></div>
+            </form>
+        </div>
+        <div class="col-md"></div>
+    </div>
+</div>
+
+@functions {
+    ElementRef _usernameElement;
+    ElementRef _passwordElement;
+    ElementRef _confirmPasswordElement;
+    ElementRef _generatedLinkElement;
+
+    void OnKeyUp(ElementRef element, Action<string> handler)
+    {
+        var x = ((IJSInProcessRuntime)JSRuntime.Current).Invoke<string>(
+                "blazorPassFunctions.getElementValue", element);
+        handler(x);
+    }
+
+    bool _showProgress;
+
+    string _username;
+    string _password;
+    string _confirmPassword;
+    string _generatedLink;
+
+    string InvalidIf(string msg) => string.IsNullOrEmpty(msg)
+            ? ""
+            : "is-invalid";
+
+    string ConfirmPasswordInvalid => _password == _confirmPassword
+            ? ""
+            : "Passwords do not match";
+
+    bool GenerateLinkDisabled => string.IsNullOrEmpty(_username)
+            || string.IsNullOrEmpty(_password)
+            || string.IsNullOrEmpty(_confirmPassword)
+            || (_password != _confirmPassword);
+
+    async Task GenerateLink()
+    {
+        try
+        {
+            await SetProgress(true);
+            var nowStart = DateTime.Now;
+            var pubKey = Program.Settings.PresetPublicKey;
+            var genKey = string.IsNullOrEmpty(pubKey);
+
+            if (genKey)
+            {
+                Console.WriteLine("Public Key is missing; GENERATING NEW KEY PAIR -- THIS WILL BE SLOW!");
+            }
+
+            using (var crypto = new CryptoHelper(pubKey))
+            {
+                if (genKey)
+                {
+                    Console.WriteLine("MakeLink PublicKey is missing, generated new key pair:");
+                    Console.WriteLine("  * PRIVATE: [{0}]", crypto.ExportPrivate);
+                    Console.WriteLine("  * PUBLIC:  [{0}]", crypto.ExportPublic);
+                }
+
+                // Use GUID as nonce
+                var cryptPair = crypto.Encrypt($"{Guid.NewGuid()}\n{_username}\n{_password}");
+
+                var uriBuilder = new UriBuilder(uriHelper.GetBaseUri());
+                uriBuilder.Query = $"v=1&preset={cryptPair}";
+                _generatedLink = uriBuilder.ToString();
+                var nowEnd = DateTime.Now;
+
+                toaster.Success($"Generated link in [{(nowEnd - nowStart).TotalMilliseconds}] ms");
+            }
+        }
+        finally
+        {
+            await SetProgress(false);
+        }
+    }
+
+    void CopyGeneratedLink()
+    {
+        ((IJSInProcessRuntime)JSRuntime.Current).Invoke<string>(
+                "blazorPassFunctions.copyElement", _generatedLinkElement);
+        toaster.Success("URL copied to clipboard");
+    }
+
+    async Task SetProgress(bool show)
+    {
+        _showProgress = show;
+        await JSRuntime.Current.InvokeAsync<string>(
+                "blazorPassFunctions.showProgress",
+                _showProgress);
+        this.StateHasChanged();
+    }
+}

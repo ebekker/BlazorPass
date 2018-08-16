@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width">
     <title>BlazorPass</title>
     <base href="/" />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/site.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/site.css" />
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css"
+          integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ"
+          crossorigin="anonymous">
 </head>
 <body>
     <app id="mainApp">Loading...</app>
-
     <script>
         window.blazorPassFunctions = {
             getElementValue: function (el) {
@@ -26,6 +28,11 @@
                     main.style.cursor = null;
                 }
                 return main.style.cursor;
+            },
+            copyElement: function (el) {
+                el.select();
+                document.execCommand("copy");
+                return el.value;
             }
         };
     </script>

@@ -2,6 +2,7 @@
 @page "/"
 
 @inject Sotsera.Blazor.Toaster.IToaster toaster;
+@inject Microsoft.AspNetCore.Blazor.Services.IUriHelper uriHelper;
 @inject HttpClient http
 
 <div class="container">
@@ -10,10 +11,7 @@
         <div class="col-md-auto border rounded shadow">
             <form class="my-auto">
                 <div class="form-group"></div>
-                @*<div class="form-group">
-            <input type="text" ref="inputElement" bind="@_test" onkeyup="@(ev => Foo())" /> [@_test][@_test2]
-        </div>*@
-                <div class="form-group">
+                <div class="form-group" hidden="@(_showPreset)">
                     @*<label for="username">Username</label>*@
                     <input ref="_usernameElement" type="text" class="form-control" id="username"
                            bind="@_username"
@@ -21,13 +19,20 @@
                            placeholder="username" aria-describedby="usernameHelp" />
                     <small id="usernameHelp" class="form-text text-muted">Enter your username <b><i>without</i></b> any adornments like domain names.</small>
                 </div>
-                <div class="form-group">
+                <div class="form-group" hidden="@(_showPreset)">
                     @*<label for="currentPassword">Current Password</label>*@
                     <input ref="_currentPasswordElement" type="password" class="form-control" id="currentPassword"
                            bind="@_currentPassword"
                            onkeyup="@(ev => OnKeyUp(_currentPasswordElement, x => _currentPassword = x))"
                            placeholder="current password" aria-describedby="currentPasswordHelp" />
                     <small id="currentPasswordHelp" class="form-text text-muted">Provide your current password.</small>
+                </div>
+                <div class="form-group" hidden="@(!_showPreset || string.IsNullOrEmpty(_presetUsername))">
+                    @*<label for="username">Username</label>*@
+                    <input ref="_presetUsernameElement" type="text" class="form-control" id="preset"
+                           bind="@_presetUsername" readonly="readonly"
+                           aria-describedby="presetHelp" />
+                    <small id="presetHelp" class="form-text text-muted">Resolved username from preset payload.</small>
                 </div>
                 <div class="form-group">
                     @*<label for="newPassword">New Password</label>*@
@@ -75,6 +80,7 @@
 @functions {
     ElementRef _usernameElement;
     ElementRef _currentPasswordElement;
+    ElementRef _presetUsernameElement;
     ElementRef _newPasswordElement;
     ElementRef _confirmNewPasswordElement;
     ElementRef _mfaElement;
@@ -87,9 +93,12 @@
     }
 
     bool _showProgress;
+    bool _showPreset;
+    string _presetPayload;
 
     string _username;
     string _currentPassword;
+    string _presetUsername;
     string _newPassword;
     string _confirmNewPassword;
     string _mfa;
@@ -103,12 +112,68 @@
             : "New passwords do not match";
 
     bool ChangePasswordDisabled => _showProgress
-            || string.IsNullOrEmpty(_username)
-            || string.IsNullOrEmpty(_currentPassword)
+            || (_presetUsername == null
+                && (string.IsNullOrEmpty(_username) || string.IsNullOrEmpty(_currentPassword)))
             || string.IsNullOrEmpty(_newPassword)
             || string.IsNullOrEmpty(_confirmNewPassword)
             || (_newPassword != _confirmNewPassword)
             || (Program.Settings.ShowMfa && string.IsNullOrEmpty(_mfa));
+
+    override protected async Task OnInitAsync()
+    {
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(
+                new Uri(uriHelper.GetAbsoluteUri()).Query);
+        if (query.TryGetValue("preset", out var presetValues))
+        {
+            _showPreset = true;
+            _presetPayload = presetValues.ToString();
+
+            var trySettings = 0;
+            while (Program.Settings == null)
+            {
+                // We need to give some time for app settings to get loaded
+                if (trySettings++ > 5)
+                {
+                    toaster.Error($"Failed to resolve app settings!",
+                            title: "Error",
+                            // We really want to disable the auto-hide, but Blazor Toaster does not
+                            // [yet](https://github.com/sotsera/sotsera.blazor.toaster/issues/11)
+                            // offer that option so we just make it very long
+                            configure: x =>
+                            {
+                                x.VisibleStateDuration = int.MaxValue;
+                                x.ShowProgressBar = false;
+                            });
+                    return;
+                }
+                await Task.Delay(500);
+            }
+
+            try
+            {
+                await SetProgress(true);
+                _presetUsername = await http.GetStringAsync($"{Program.Settings.Api}/PasswordChange/VerifyPreset?preset={_presetPayload}");
+            }
+            catch (Exception ex)
+            {
+                toaster.Error($"Failed to verify preset payload: {ex.Message}",
+                        title: "Error",
+                        // We really want to disable the auto-hide, but Blazor Toaster does not
+                        // [yet](https://github.com/sotsera/sotsera.blazor.toaster/issues/11)
+                        // offer that option so we just make it very long
+                        configure: x =>
+                        {
+                            x.VisibleStateDuration = int.MaxValue;
+                            x.ShowProgressBar = false;
+                        });
+                Console.WriteLine(ex.ToString());
+            }
+            finally
+            {
+                await SetProgress(false);
+            }
+        }
+    }
 
     async void ChangePassword()
     {
@@ -118,6 +183,7 @@
             CurrentPassword = _currentPassword,
             NewPassword = _newPassword,
             Mfa = _mfa,
+            PresetPayload = _presetPayload,
         };
 
         try
@@ -136,7 +202,8 @@
                         // We really want to disable the auto-hide, but Blazor Toaster does not
                         // [yet](https://github.com/sotsera/sotsera.blazor.toaster/issues/11)
                         // offer that option so we just make it very long
-                        configure: x => {
+                        configure: x =>
+                        {
                             x.VisibleStateDuration = int.MaxValue;
                             x.ShowProgressBar = false;
                         });
@@ -144,10 +211,12 @@
         }
         finally
         {
+            await SetProgress(false);
+
             _currentPassword = null;
             _newPassword = null;
             _confirmNewPassword = null;
-            await SetProgress(false);
+            _mfa = null;
 
             // Because of the async and toasts above, Blazor may be done detecting
             // changes before we get here so we need to signal that we're dirty

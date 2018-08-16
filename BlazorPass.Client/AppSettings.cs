@@ -11,5 +11,7 @@ namespace BlazorPass.Client
         public string Api { get; set; }
 
         public bool ShowMfa { get; set; }
+
+        public string PresetPublicKey { get; set; }
     }
 }
