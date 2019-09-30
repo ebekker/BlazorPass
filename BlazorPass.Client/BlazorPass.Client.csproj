@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Browser" Version="0.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.1.1" />
-    <PackageReference Include="Sotsera.Blazor.Toaster" Version="0.6.0" />
+    <PackageReference Include="Sotsera.Blazor.Toaster" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>
